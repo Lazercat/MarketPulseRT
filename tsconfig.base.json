@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "types": ["vite/client"],
+    "paths": {
+      "@app/design-system/*": ["packages/design-system/src/*"],
+      "@app/shared-contracts/*": ["packages/shared-contracts/src/*"],
+      "@app/web-utils/*": ["packages/web-utils/src/*"]
+    }
+  }
+}

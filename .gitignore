@@ -1,3 +1,10 @@
+###############################################
+# Node / Turborepo / Yarn Workspaces
+###############################################
+
+# Dependencies
+node_modules/
+.pnp.*
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
@@ -5,13 +12,159 @@
 !.yarn/sdks
 !.yarn/versions
 
-# Whether you use PnP or not, the node_modules folder is often used to store
-# build artifacts that should be gitignored
-node_modules
+# Yarn 4 Zero-Installs
+# Remove these lines if you WANT to commit .yarn/cache
+.yarn/cache/
 
-# Swap the comments on the following lines if you wish to use zero-installs
-# In that case, don't forget to run `yarn config set enableGlobalCache false`!
-# Documentation here: https://yarnpkg.com/features/caching#zero-installs
+# Turborepo
+turbo/*
+!.turbo/tasks.db
 
-#!.yarn/cache
-.pnp.*
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.log
+
+# Environment variables
+.env
+.env.*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+###############################################
+# Vite / React Frontend (web-dashboard)
+###############################################
+
+apps/web-dashboard/dist/
+apps/web-dashboard/.vite/
+apps/web-dashboard/.DS_Store
+
+# IDE helpers
+apps/web-dashboard/*.iml
+apps/web-dashboard/vite.config.ts.timestamp*
+
+###############################################
+# .NET / C# Build Artifacts
+###############################################
+
+# Build outputs
+**/bin/
+**/obj/
+**/out/
+
+# .NET user secrets
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.*.local.json
+secrets.json
+
+# VS local files
+*.user
+*.suo
+
+# Rider / ReSharper
+.idea/
+*.DotSettings.user
+
+###############################################
+# gRPC / Protobuf Generated Files
+###############################################
+
+# C# artifacts (auto-generated)
+**/*.csproj.user
+**/Protos/*.cs.lua
+**/Protos/*.cs.json
+
+###############################################
+# Terraform
+###############################################
+
+infrastructure/terraform/.terraform/
+infrastructure/terraform/.terraform.lock.hcl
+infrastructure/terraform/terraform.tfstate*
+infrastructure/terraform/crash.log
+infrastructure/terraform/plan.out
+
+###############################################
+# Docker
+###############################################
+
+docker-compose.override.yml
+**/Dockerfile.local
+**/.dockerignore.timestamp*
+
+# Build artifacts
+**/docker-build/
+**/docker-output/
+
+###############################################
+# OS & Editor Junk Files
+###############################################
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# VS Code
+.vscode/
+.history/
+.settings/
+
+# IDE metadata
+*.iml
+*.class
+*.swp
+*.swo
+.*.sw?
+
+###############################################
+# Misc Project-Level Ignored Files
+###############################################
+
+# Debug dumps
+*.dump
+*.dmp
+*.stackdump
+
+# Temp files
+*.tmp
+tmp/
+temp/
+
+# Local certificates for development (SignalR, Auth0 callbacks)
+*.pfx
+*.pem
+*.key
+
+# Storybook (if added later)
+storybook-static/
+
+# Cypress/Playwright test output (if used later)
+cypress/videos/
+cypress/screenshots/
+test-results/
+
+###############################################
+# Optional: If you commit Docs or Diagrams
+###############################################
+docs/.cache/
+docs/.temp/
+
+diagrams/*.png
+diagrams/*.svg
+diagrams/*.vsdx
+diagrams/*.drawio
+
+###############################################
+# End of .gitignore
