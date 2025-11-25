@@ -1,0 +1,6 @@
+aws_region          = "us-east-1"
+environment         = "dev"
+market_data_image   = "ghcr.io/lazercat/market-data-service:latest"
+api_gateway_image   = "ghcr.io/lazercat/api-gateway:latest"
+ecs_execution_role_arn = "arn:aws:iam::<account-id>:role/ecsTaskExecutionRole"
+ecs_task_role_arn      = "arn:aws:iam::<account-id>:role/ecsTaskRole"
