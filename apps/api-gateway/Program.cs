@@ -45,3 +45,5 @@ app.MapControllers();
 app.MapHub<MarketHub>("/hubs/market");
 
 app.Run();
+
+public partial class Program { }

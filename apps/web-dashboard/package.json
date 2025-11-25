@@ -3,6 +3,11 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Lazercat/MarketPulseRT.git",
+    "directory": "apps/web-dashboard"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

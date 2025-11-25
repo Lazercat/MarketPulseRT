@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  market-data-service:
+    build:
+      context: ./apps/market-data-service
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_URLS: "http://+:5001"
+      DOTNET_ENVIRONMENT: "Development"
+      MarketData__Source: "Mock"
+    ports:
+      - "5001:5001"
+
+  api-gateway:
+    build:
+      context: ./apps/api-gateway
+      dockerfile: Dockerfile
+    environment:
+      ASPNETCORE_URLS: "http://+:5100"
+      DOTNET_ENVIRONMENT: "Development"
+      MarketDataService__GrpcUrl: "http://market-data-service:5001"
+      DOTNET_SYSTEM_NET_HTTP_SOCKETSHTTPHANDLER_HTTP2UNENCRYPTEDSUPPORT: "true"
+    depends_on:
+      - market-data-service
+    ports:
+      - "5100:5100"
+
+  web-dashboard:
+    build:
+      context: ./apps/web-dashboard
+      dockerfile: Dockerfile
+    environment:
+      VITE_API_BASE: "http://localhost:5100"
+    depends_on:
+      - api-gateway
+    ports:
+      - "4173:4173"
