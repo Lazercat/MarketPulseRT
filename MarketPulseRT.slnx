@@ -1,2 +1,9 @@
 <Solution>
+  <Folder Name="/apps/" />
+  <Folder Name="/apps/api-gateway/">
+    <Project Path="apps/api-gateway/ApiGateway.csproj" />
+  </Folder>
+  <Folder Name="/apps/market-data-service/">
+    <Project Path="apps/market-data-service/MarketDataService.csproj" />
+  </Folder>
 </Solution>

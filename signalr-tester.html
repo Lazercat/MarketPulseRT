@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignalR Market Data Stream Tester</title>
+    <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #4ec9b0;
+            border-bottom: 2px solid #4ec9b0;
+            padding-bottom: 10px;
+        }
+        .status {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.disconnected { background: #c74440; color: white; }
+        .status.connecting { background: #dcdcaa; color: #1e1e1e; }
+        .status.connected { background: #4ec9b0; color: #1e1e1e; }
+        .controls {
+            margin: 20px 0;
+        }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #005a9e;
+        }
+        button:disabled {
+            background: #3e3e3e;
+            cursor: not-allowed;
+        }
+        .ticker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .ticker-card {
+            background: #252526;
+            border: 1px solid #3e3e3e;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        .ticker-card.BTCUSDT { border-left: 4px solid #f7931a; }
+        .ticker-card.ETHUSDT { border-left: 4px solid #627eea; }
+        .ticker-card.SOLUSDT { border-left: 4px solid #14f195; }
+        .ticker-symbol {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #4ec9b0;
+        }
+        .ticker-price {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .price-up { color: #4ec9b0; }
+        .price-down { color: #f48771; }
+        .ticker-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .detail-label {
+            color: #858585;
+        }
+        .detail-value {
+            color: #d4d4d4;
+            text-align: right;
+        }
+        .log {
+            background: #1e1e1e;
+            border: 1px solid #3e3e3e;
+            border-radius: 5px;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #007acc;
+            padding-left: 10px;
+        }
+        .log-entry.error {
+            border-left-color: #f48771;
+            color: #f48771;
+        }
+        .log-entry.success {
+            border-left-color: #4ec9b0;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #252526;
+            border: 1px solid #3e3e3e;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4ec9b0;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #858585;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 SignalR Market Data Stream Tester</h1>
+
+        <div id="status" class="status disconnected">
+            Disconnected
+        </div>
+
+        <div class="controls">
+            <button id="connectBtn" onclick="connect()">Connect</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+            <button onclick="clearLog()">Clear Log</button>
+            <button onclick="clearStats()">Reset Stats</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalUpdates">0</div>
+                <div class="stat-label">Total Updates</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="updatesPerSec">0</div>
+                <div class="stat-label">Updates/sec</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="connectionTime">0s</div>
+                <div class="stat-label">Connected Time</div>
+            </div>
+        </div>
+
+        <h2>Live Ticker Data</h2>
+        <div class="ticker-grid" id="tickerGrid">
+            <!-- Ticker cards will be inserted here -->
+        </div>
+
+        <h2>Event Log</h2>
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        let connection = null;
+        let tickers = {};
+        let totalUpdates = 0;
+        let startTime = null;
+        let connectionTimeInterval = null;
+
+        function updateStatus(status, message) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = `status ${status}`;
+            statusEl.textContent = message;
+        }
+
+        function log(message, type = 'info') {
+            const logEl = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logEl.insertBefore(entry, logEl.firstChild);
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            log('Log cleared', 'success');
+        }
+
+        function clearStats() {
+            totalUpdates = 0;
+            tickers = {};
+            document.getElementById('tickerGrid').innerHTML = '';
+            updateStatsDisplay();
+            log('Stats reset', 'success');
+        }
+
+        function updateStatsDisplay() {
+            document.getElementById('totalUpdates').textContent = totalUpdates;
+
+            if (startTime) {
+                const elapsed = (Date.now() - startTime) / 1000;
+                const rate = (totalUpdates / elapsed).toFixed(2);
+                document.getElementById('updatesPerSec').textContent = rate;
+            }
+        }
+
+        function updateConnectionTime() {
+            if (startTime) {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById('connectionTime').textContent = `${elapsed}s`;
+            }
+        }
+
+        function renderTicker(symbol, data) {
+            let card = document.getElementById(`ticker-${symbol}`);
+
+            if (!card) {
+                card = document.createElement('div');
+                card.id = `ticker-${symbol}`;
+                card.className = `ticker-card ${symbol}`;
+                document.getElementById('tickerGrid').appendChild(card);
+            }
+
+            const prevPrice = tickers[symbol]?.lastPrice || data.lastPrice;
+            const priceDirection = data.lastPrice > prevPrice ? 'price-up' :
+                                   data.lastPrice < prevPrice ? 'price-down' : '';
+
+            const timestamp = new Date(data.tsUnixMs).toLocaleTimeString();
+
+            card.innerHTML = `
+                <div class="ticker-symbol">${symbol}</div>
+                <div class="ticker-price ${priceDirection}">$${data.lastPrice.toFixed(2)}</div>
+                <div class="ticker-details">
+                    <div class="detail-label">Bid:</div>
+                    <div class="detail-value">$${data.bidPrice.toFixed(2)}</div>
+                    <div class="detail-label">Ask:</div>
+                    <div class="detail-value">$${data.askPrice.toFixed(2)}</div>
+                    <div class="detail-label">Spread:</div>
+                    <div class="detail-value">$${(data.askPrice - data.bidPrice).toFixed(2)}</div>
+                    <div class="detail-label">Time:</div>
+                    <div class="detail-value">${timestamp}</div>
+                </div>
+            `;
+
+            tickers[symbol] = data;
+        }
+
+        async function connect() {
+            try {
+                updateStatus('connecting', 'Connecting...');
+                log('Initializing SignalR connection to http://localhost:5100/hubs/market');
+
+                connection = new signalR.HubConnectionBuilder()
+                    .withUrl("http://localhost:5100/hubs/market")
+                    .withAutomaticReconnect()
+                    .configureLogging(signalR.LogLevel.Information)
+                    .build();
+
+                connection.on("tickerUpdate", (update) => {
+                    totalUpdates++;
+                    renderTicker(update.symbol, update);
+                    updateStatsDisplay();
+
+                    if (totalUpdates % 10 === 0) {
+                        log(`Received update #${totalUpdates} for ${update.symbol}: $${update.lastPrice.toFixed(2)}`);
+                    }
+                });
+
+                connection.onreconnecting(error => {
+                    updateStatus('connecting', 'Reconnecting...');
+                    log('Connection lost. Reconnecting...', 'error');
+                });
+
+                connection.onreconnected(connectionId => {
+                    updateStatus('connected', `Connected (reconnected)`);
+                    log('Reconnected successfully', 'success');
+                });
+
+                connection.onclose(error => {
+                    updateStatus('disconnected', 'Disconnected');
+                    log(`Connection closed${error ? ': ' + error : ''}`, 'error');
+                    document.getElementById('connectBtn').disabled = false;
+                    document.getElementById('disconnectBtn').disabled = true;
+                    if (connectionTimeInterval) {
+                        clearInterval(connectionTimeInterval);
+                        connectionTimeInterval = null;
+                    }
+                });
+
+                await connection.start();
+
+                updateStatus('connected', 'Connected - Waiting for data...');
+                log('✓ Connected successfully', 'success');
+                log('NOTE: You need to subscribe to symbols to receive updates', 'info');
+
+                startTime = Date.now();
+                connectionTimeInterval = setInterval(updateConnectionTime, 1000);
+
+                document.getElementById('connectBtn').disabled = true;
+                document.getElementById('disconnectBtn').disabled = false;
+
+                // Subscribe to all symbols
+                const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
+                for (const symbol of symbols) {
+                    await connection.invoke("Subscribe", symbol);
+                    log(`✓ Subscribed to ${symbol}`, 'success');
+                }
+
+            } catch (error) {
+                updateStatus('disconnected', 'Connection failed');
+                log('✗ Connection failed: ' + error, 'error');
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('disconnectBtn').disabled = true;
+            }
+        }
+
+        async function disconnect() {
+            if (connection) {
+                await connection.stop();
+                log('Disconnected by user', 'info');
+            }
+        }
+
+        // Auto-connect on page load
+        window.addEventListener('load', () => {
+            log('Page loaded. Click Connect to start receiving market data.', 'info');
+        });
+    </script>
+</body>
+</html>

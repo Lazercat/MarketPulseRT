@@ -13,6 +13,7 @@
     "baseUrl": ".",
     "types": ["vite/client"],
     "paths": {
+      "@app/design-system": ["packages/design-system/src/index.ts"],
       "@app/design-system/*": ["packages/design-system/src/*"],
       "@app/shared-contracts/*": ["packages/shared-contracts/src/*"],
       "@app/web-utils/*": ["packages/web-utils/src/*"]

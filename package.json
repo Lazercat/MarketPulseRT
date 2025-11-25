@@ -1,16 +1,24 @@
 {
-  "name": "trading-dashboard-dotnet-react",
+  "name": "marketpulse-rt",
+  "version": "1.0.0",
   "packageManager": "yarn@4.11.0",
   "author": "Jesse Lewis",
+  "license": "UNLICENSED",
   "workspaces": [
-    "apps/*",
+    "apps/web-dashboard",
     "packages/*"
   ],
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
-    "test": "turbo test",
-    "lint": "turbo lint"
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=web-dashboard",
+    "dev:api-gateway": "dotnet run --project apps/api-gateway/ApiGateway.csproj",
+    "dev:market-data": "dotnet run --project apps/market-data-service/MarketDataService.csproj",
+    "build:js": "turbo run build",
+    "build:dotnet": "dotnet build apps/market-data-service/MarketDataService.csproj && dotnet build apps/api-gateway/ApiGateway.csproj",
+    "build": "yarn build:js && yarn build:dotnet",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "postinstall": "dotnet restore apps/market-data-service/MarketDataService.csproj && dotnet restore apps/api-gateway/ApiGateway.csproj"
   },
   "devDependencies": {
     "turbo": "^2.0.0",

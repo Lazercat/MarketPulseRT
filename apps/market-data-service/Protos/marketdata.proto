@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option csharp_namespace = "MarketPulseRT.Proto";
+
+package marketdata;
+
+message TickerSubscription {
+  string symbol = 1; // e.g. "BTCUSDT"; empty = all/default
+}
+
+message TickerUpdate {
+  string symbol = 1;
+  double lastPrice = 2;
+  double bidPrice = 3;
+  double askPrice = 4;
+  int64 tsUnixMs = 5;
+}
+
+service MarketDataStreamer {
+  rpc StreamTickers(TickerSubscription) returns (stream TickerUpdate);
+}
