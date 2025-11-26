@@ -185,7 +185,9 @@ function App() {
           <p className="eyebrow">MarketPulse RT</p>
           <h1>Realtime crypto tape</h1>
           <p className="lede">
-            Binance feeds → gRPC → SignalR → AG Grid. Monitor latency and stability as ticks flow.
+            Binance feeds → gRPC → SignalR → AG Grid. A low-latency path from exchange trades to
+            your browser, built to observe stability and throughput as ticks flow. Think of it like
+            a digital ticker tape: prices roll in live so you can watch speed, spreads, and uptime.
           </p>
           <div className="chip-row">
             {DEFAULT_SYMBOLS.map((s) => (
@@ -258,6 +260,11 @@ function App() {
           <div>
             <p className="eyebrow">Live stream</p>
             <h2 id="tick-updates-heading">Tick updates</h2>
+            <p className="lede small">
+              This is the live tape: each row auto-updates with the latest price per symbol. Under
+              the hood, gRPC ticks flow through SignalR and are buffered per animation frame so the
+              grid stays smooth while showing the freshest price.
+            </p>
           </div>
           <div className="legend">
             <span className="legend-dot up" /> uptick

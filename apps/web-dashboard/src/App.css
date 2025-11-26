@@ -36,6 +36,12 @@ h1 {
   color: #94a8c7;
   max-width: 720px;
 }
+.lede.small {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: #8aa0c0;
+  max-width: 640px;
+}
 
 .chip-row {
   display: flex;
