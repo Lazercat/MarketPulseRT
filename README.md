@@ -52,3 +52,9 @@ Build a production-grade, portfolio-ready real-time trading-style dashboard that
 - **Emotion + Styled System** for design system tokens/composability
 - **Zustand** (or Redux Toolkit) for normalized client-side state
 - **Docker** for containerization, **Terraform** for AWS-ready infra skeleton
+
+## Screenshots
+
+![Dashboard hero with metrics and sparklines](docs/screenshots/dashboard-hero.png)
+
+![Live stream grid and Lighthouse scores](docs/screenshots/dashboard-stream.png)

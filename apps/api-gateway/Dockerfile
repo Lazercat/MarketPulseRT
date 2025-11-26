@@ -1,8 +1,8 @@
-# Build and publish ApiGateway
+# Build and publish ApiGateway (expects repo root as build context)
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY . .
-RUN dotnet publish ApiGateway.csproj -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish apps/api-gateway/ApiGateway.csproj -c Release -o /app/publish /p:UseAppHost=false
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app

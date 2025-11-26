@@ -11,7 +11,8 @@
   justify-content: space-between;
   gap: 16px;
   align-items: flex-start;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+  min-height: 180px;
 }
 
 .eyebrow {
@@ -26,6 +27,8 @@ h1 {
   margin: 0;
   font-size: 36px;
   letter-spacing: -0.02em;
+  line-height: 1.1;
+  min-height: 42px;
 }
 
 .lede {
@@ -38,6 +41,7 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  min-height: 32px;
 }
 
 .chip {
@@ -47,6 +51,8 @@ h1 {
   border-radius: 12px;
   font-size: 12px;
   color: #d5e8ff;
+  min-width: 64px;
+  text-align: center;
 }
 
 .status-pill {
@@ -98,15 +104,21 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
+  min-height: 150px;
 }
 
 .metric-card {
-  padding: 16px 18px;
+  padding: 14px 16px;
   background: rgba(18, 30, 54, 0.7);
   border-radius: 16px;
   border: 1px solid rgba(125, 201, 255, 0.2);
   box-shadow: 0 12px 40px rgba(0, 10, 40, 0.2);
+  min-height: 112px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
 }
 
 .metric-label {
@@ -121,6 +133,9 @@ h1 {
   margin: 8px 0 4px;
   font-size: 28px;
   letter-spacing: -0.01em;
+  display: inline-block;
+  min-height: 32px;
+  min-width: 8ch;
 }
 
 .metric-sub {
@@ -136,6 +151,7 @@ h1 {
   background: rgba(12, 21, 38, 0.82);
   border: 1px solid rgba(125, 201, 255, 0.2);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+  min-height: 360px;
 }
 
 .grid-card__header {
@@ -143,6 +159,7 @@ h1 {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  min-height: 40px;
 }
 
 .legend {
@@ -170,6 +187,19 @@ h1 {
 .grid {
   border-radius: 12px;
   overflow: hidden;
+  min-height: 260px;
+  width: 100%;
+  display: block;
+}
+
+.grid .ag-root-wrapper,
+.grid .ag-root-wrapper-body {
+  min-height: 260px;
+  width: 100%;
+}
+
+.grid-skeleton {
+  min-height: 260px;
 }
 
 .ag-theme-quartz-dark {
@@ -215,16 +245,19 @@ h1 {
 
 .sparkline-section {
   margin-top: 20px;
+  min-height: 440px;
 }
 
 .sparkline-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 12px;
+  min-height: 320px;
 }
 
 .spark-card {
   padding: 12px 14px;
+  min-height: 170px;
 }
 
 .spark-card__header {
@@ -232,6 +265,7 @@ h1 {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 4px;
+  min-height: 32px;
 }
 
 .spark-card__label {
@@ -255,10 +289,17 @@ h1 {
   margin-top: 6px;
   color: #9fb2d3;
   font-size: 13px;
+  min-height: 20px;
 }
 
 .sparkline-delta {
   color: #9fb2d3;
+}
+
+.metric-value,
+.sparkline-footer,
+.legend {
+  font-variant-numeric: tabular-nums;
 }
 
 .sparkline-empty {

@@ -5,7 +5,7 @@ public class MarketDataOptions
     public const string SectionName = "MarketData";
 
     public DataSourceType Source { get; set; } = DataSourceType.Mock;
-    public string[] Symbols { get; set; } = ["BTCUSDT", "ETHUSDT", "SOLUSDT"];
+    public string[] Symbols { get; set; } = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "AVAXUSDT", "DOGEUSDT"];
     public BinanceOptions? Binance { get; set; }
 }
 

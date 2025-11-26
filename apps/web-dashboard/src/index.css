@@ -1,11 +1,10 @@
-@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
-
 :root {
-  font-family: "Space Grotesk", "Inter", system-ui, -apple-system, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
   line-height: 1.5;
   font-weight: 400;
   color: #e9f1ff;
   background-color: #050914;
+  font-variant-numeric: tabular-nums;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

@@ -1,16 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { HubConnection, HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
-import { AgGridReact } from "ag-grid-react";
-import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
-import type { ColDef } from "ag-grid-community";
-import { format } from "date-fns";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import type { HubConnection } from "@microsoft/signalr";
 import { Card, Pill } from "@app/design-system";
-import "ag-grid-community/styles/ag-grid.css";
-import "ag-grid-community/styles/ag-theme-quartz.css";
 import "./App.css";
-
-// Register all community features for AG Grid v33 module build
-ModuleRegistry.registerModules([AllCommunityModule]);
 
 type TickerUpdate = {
   symbol: string;
@@ -24,6 +15,7 @@ type TickerRow = TickerUpdate & { change: number };
 type ConnectionState = "disconnected" | "connecting" | "connected" | "reconnecting";
 
 const DEFAULT_SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "AVAXUSDT", "DOGEUSDT"];
+const TickerGrid = lazy(() => import("./components/TickerGrid"));
 
 function useTickerStream(symbols: string[]) {
   const [rows, setRows] = useState<TickerRow[]>([]);
@@ -77,73 +69,81 @@ function useTickerStream(symbols: string[]) {
       rafRef.current = requestAnimationFrame(flush);
     };
 
-    const connection = new HubConnectionBuilder()
-      .withUrl("http://localhost:5100/hubs/market")
-      .withAutomaticReconnect([0, 2000, 5000, 10000])
-      .configureLogging(LogLevel.Information)
-      .build();
+    const startConnection = async () => {
+      const { HubConnectionBuilder, LogLevel } = await import("@microsoft/signalr");
+      const connection = new HubConnectionBuilder()
+        .withUrl("http://localhost:5100/hubs/market")
+        .withAutomaticReconnect([0, 2000, 5000, 10000])
+        .configureLogging(LogLevel.Information)
+        .build();
 
-    connectionRef.current = connection;
+      connectionRef.current = connection;
 
-    connection.on("tickerUpdate", (update: TickerUpdate) => {
-      const prev = bufferRef.current[update.symbol];
-      const change = prev ? update.lastPrice - prev.lastPrice : 0;
-      bufferRef.current[update.symbol] = { ...update, change };
+      connection.on("tickerUpdate", (update: TickerUpdate) => {
+        const prev = bufferRef.current[update.symbol];
+        const change = prev ? update.lastPrice - prev.lastPrice : 0;
+        bufferRef.current[update.symbol] = { ...update, change };
 
-       // Keep a bounded rolling price history for sparklines (last ~90 points)
-      const existing = historyRef.current[update.symbol] ?? [];
-      const nextHistory = [...existing, { ts: update.tsUnixMs, price: update.lastPrice }];
-      // Limit to 90 samples to keep render light
-      historyRef.current[update.symbol] = nextHistory.slice(-90);
+        // Keep a bounded rolling price history for sparklines (last ~90 points)
+        const existing = historyRef.current[update.symbol] ?? [];
+        const nextHistory = [...existing, { ts: update.tsUnixMs, price: update.lastPrice }];
+        historyRef.current[update.symbol] = nextHistory.slice(-90);
 
-      totalUpdatesRef.current += 1;
-      scheduleFlush();
-    });
+        totalUpdatesRef.current += 1;
+        scheduleFlush();
+      });
 
-    connection.onreconnecting((error) => {
-      if (!isMounted) return;
-      setConnectionState("reconnecting");
-      setLastError(error?.message ?? null);
-    });
+      connection.onreconnecting((error) => {
+        if (!isMounted) return;
+        setConnectionState("reconnecting");
+        setLastError(error?.message ?? null);
+      });
 
-    connection.onreconnected(async () => {
-      if (!isMounted) return;
-      setConnectionState("connected");
-      setLastError(null);
-      await Promise.all(symbols.map((s) => connection.invoke("Subscribe", s)));
-    });
+      connection.onreconnected(async () => {
+        if (!isMounted) return;
+        setConnectionState("connected");
+        setLastError(null);
+        await Promise.all(symbols.map((s) => connection.invoke("Subscribe", s)));
+      });
 
-    connection.onclose((error) => {
-      if (!isMounted) return;
-      setConnectionState("disconnected");
-      setLastError(error?.message ?? null);
-    });
+      connection.onclose((error) => {
+        if (!isMounted) return;
+        setConnectionState("disconnected");
+        setLastError(error?.message ?? null);
+      });
 
-    const start = async () => {
-      try
-      {
+      try {
         setConnectionState("connecting");
         await connection.start();
+        if (!isMounted) return;
         setLastError(null);
         setConnectionState("connected");
         setMetrics((prev) => ({ ...prev, connectedAt: Date.now() }));
         await Promise.all(symbols.map((s) => connection.invoke("Subscribe", s)));
-      }
-      catch (err)
-      {
+      } catch (err) {
         console.error(err);
+        if (!isMounted) return;
         setLastError((err as Error).message);
         setConnectionState("disconnected");
       }
     };
 
-    start();
+    const idleHandle =
+      // Use requestIdleCallback when available to let first paint settle before loading SignalR.
+      (window as any).requestIdleCallback?.(() => {
+        startConnection();
+      }) ?? window.setTimeout(() => startConnection(), 200);
 
     return () => {
       isMounted = false;
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       if (connectionRef.current) {
         connectionRef.current.stop();
+      }
+      if (typeof idleHandle === "number") {
+        window.clearTimeout(idleHandle);
+      } else if (idleHandle) {
+        (window as any).cancelIdleCallback?.(idleHandle);
       }
     };
   }, [symbols]);
@@ -160,6 +160,7 @@ function useTickerStream(symbols: string[]) {
 
 function App() {
   const [now, setNow] = useState(Date.now());
+  const [showGrid, setShowGrid] = useState(false);
   const { rows, connectionState, metrics, lastError, history } = useTickerStream(DEFAULT_SYMBOLS);
 
   useEffect(() => {
@@ -167,46 +168,18 @@ function App() {
     return () => window.clearInterval(id);
   }, []);
 
-  const columnDefs = useMemo<ColDef<TickerRow>[]>(
-    () => [
-      { field: "symbol", headerName: "Symbol", width: 120, sort: "asc" },
-      {
-        field: "lastPrice",
-        headerName: "Last",
-        valueFormatter: (p) => formatNumber(p.value),
-        cellClass: (p) => (p.data?.change ?? 0) >= 0 ? "cell-up" : "cell-down",
-      },
-      {
-        field: "bidPrice",
-        headerName: "Bid",
-        valueFormatter: (p) => formatNumber(p.value),
-      },
-      {
-        field: "askPrice",
-        headerName: "Ask",
-        valueFormatter: (p) => formatNumber(p.value),
-      },
-      {
-        headerName: "Spread",
-        valueGetter: (p) =>
-          p.data ? Math.max(0, p.data.askPrice - p.data.bidPrice) : 0,
-        valueFormatter: (p) => formatNumber(p.value),
-      },
-      {
-        headerName: "Updated",
-        valueFormatter: (p) =>
-          p.data ? format(p.data.tsUnixMs, "HH:mm:ss") : "",
-        width: 140,
-      },
-    ],
-    []
-  );
+  // Defer grid mount until after first paint to keep CSS/JS heavy grid off the critical path
+  useEffect(() => {
+    const id = window.setTimeout(() => setShowGrid(true), 320);
+    return () => window.clearTimeout(id);
+  }, []);
 
   const connectedDuration =
     metrics.connectedAt > 0 ? Math.max(0, Math.floor((now - metrics.connectedAt) / 1000)) : 0;
 
   return (
     <div className="app-shell">
+      <main>
       <header className="hero">
         <div>
           <p className="eyebrow">MarketPulse RT</p>
@@ -260,35 +233,11 @@ function App() {
         </div>
       </section>
 
-      <section className="grid-card">
-        <div className="grid-card__header">
-          <div>
-            <p className="eyebrow">Live stream</p>
-            <h3>Tick updates</h3>
-          </div>
-          <div className="legend">
-            <span className="legend-dot up" /> uptick
-            <span className="legend-dot down" /> downtick
-          </div>
-        </div>
-        <div className="ag-theme-quartz-dark grid">
-          <AgGridReact<TickerRow>
-            rowData={rows}
-            columnDefs={columnDefs}
-            animateRows
-            domLayout="autoHeight"
-            rowHeight={44}
-            headerHeight={42}
-            suppressCellFocus
-          />
-        </div>
-      </section>
-
       <section className="sparkline-section">
         <div className="grid-card__header">
           <div>
             <p className="eyebrow">Micro trends</p>
-            <h3>Uptick / downtick history</h3>
+            <h2 id="micro-trends-heading">Uptick / downtick history</h2>
           </div>
         </div>
         <div className="sparkline-grid">
@@ -304,6 +253,28 @@ function App() {
         </div>
       </section>
 
+      <section className="grid-card" role="region" aria-labelledby="tick-updates-heading">
+        <div className="grid-card__header">
+          <div>
+            <p className="eyebrow">Live stream</p>
+            <h2 id="tick-updates-heading">Tick updates</h2>
+          </div>
+          <div className="legend">
+            <span className="legend-dot up" /> uptick
+            <span className="legend-dot down" /> downtick
+          </div>
+        </div>
+        <div className="grid">
+          <Suspense fallback={<div className="grid-skeleton" aria-label="Loading grid…" />}>
+            {showGrid && (
+              <TickerGrid
+                rows={rows}
+              />
+            )}
+          </Suspense>
+        </div>
+      </section>
+
       {lastError && connectionState !== "connected" && (
         <Card className="alert">
           <p className="alert-title">Connection hiccup</p>
@@ -313,6 +284,7 @@ function App() {
           </p>
         </Card>
       )}
+      </main>
     </div>
   );
 }

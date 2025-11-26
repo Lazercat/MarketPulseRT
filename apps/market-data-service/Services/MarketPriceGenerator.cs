@@ -1,4 +1,7 @@
 using System.Collections.Concurrent;
+using System.Linq;
+using MarketPulseRT.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace MarketPulseRT.Services;
 
@@ -6,8 +9,19 @@ public class MarketPriceGenerator : PriceStreamBroadcaster
 {
     private readonly ConcurrentDictionary<string, decimal> _prices = new();
 
-    private readonly string[] _symbols = new[] { "BTCUSDT", "ETHUSDT", "SOLUSDT" };
+    private readonly string[] _symbols;
     private readonly Random _rng = new();
+
+    public MarketPriceGenerator(IOptions<MarketDataOptions> options)
+    {
+        var configuredSymbols = options.Value.Symbols ?? Array.Empty<string>();
+        _symbols = configuredSymbols.Length > 0
+            ? configuredSymbols
+                .Select(s => s.ToUpperInvariant())
+                .Distinct()
+                .ToArray()
+            : new[] { "BTCUSDT", "ETHUSDT", "SOLUSDT", "AVAXUSDT", "DOGEUSDT" };
+    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

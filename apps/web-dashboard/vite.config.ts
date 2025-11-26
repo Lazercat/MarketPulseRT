@@ -12,5 +12,17 @@ export default defineConfig({
   },
   server: {
     port: 3000
+  },
+  build: {
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          aggrid: ['ag-grid-react', 'ag-grid-community'],
+          signalr: ['@microsoft/signalr']
+        }
+      }
+    }
   }
 })

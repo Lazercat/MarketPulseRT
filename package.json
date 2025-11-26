@@ -22,7 +22,7 @@
     "build": "yarn build:js && yarn build:dotnet",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "postinstall": "dotnet restore apps/market-data-service/MarketDataService.csproj && dotnet restore apps/api-gateway/ApiGateway.csproj"
+    "postinstall": "if [ \"$SKIP_DOTNET_RESTORE\" = \"1\" ]; then echo \"Skipping dotnet restore\"; else dotnet restore apps/market-data-service/MarketDataService.csproj && dotnet restore apps/api-gateway/ApiGateway.csproj; fi"
   },
   "devDependencies": {
     "turbo": "^2.0.0",
