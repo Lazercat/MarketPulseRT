@@ -99,7 +99,7 @@ This also restores the .NET projects unless `SKIP_DOTNET_RESTORE=1` is set.
 cp apps/market-data-service/.env.example apps/market-data-service/.env
 # edit MarketData__Source=Binance to hit live Binance trades
 ```
-- Docker Compose currently sets `MarketData__Source=Mock`; change that env in `docker-compose.yml` if you want live feed when running in containers.
+- Docker Compose currently sets `MarketData__Source=Mock`; set it to `Binance` in `docker-compose.yml` if you want the live feed. If Binance mainnet is geo-blocked, set `MarketData__Binance__UseTestnet=true` to use `wss://testnet.binance.vision`.
 
 3) **Run everything with Docker (recommended)**
 ```bash

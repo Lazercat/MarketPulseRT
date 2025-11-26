@@ -45,9 +45,18 @@ public class BinanceWebSocketFeed : PriceStreamBroadcaster
         _webSocket?.Dispose();
         _webSocket = new ClientWebSocket();
 
-        // Build stream names for all symbols (e.g., btcusdt@trade)
-        var streams = string.Join("/", _options.Symbols.Select(s => $"{s.ToLowerInvariant()}@trade"));
-        var url = $"{_options.Binance?.WebSocketUrl}/stream?streams={streams}";
+        // Build stream names for all symbols (e.g., btcusdt@trade) and de-duplicate in case config repeats
+        var streams = string.Join("/",
+            _options.Symbols
+                .Select(s => $"{s.ToLowerInvariant()}@trade")
+                .Distinct(StringComparer.OrdinalIgnoreCase));
+
+        // Allow testnet override to avoid geo-blocks
+        var baseUrl = _options.Binance?.UseTestnet == true
+            ? "wss://testnet.binance.vision"
+            : _options.Binance?.WebSocketUrl ?? "wss://stream.binance.com:9443";
+
+        var url = $"{baseUrl}/stream?streams={streams}";
 
         _logger.LogInformation("Connecting to Binance WebSocket: {Url}", url);
         await _webSocket.ConnectAsync(new Uri(url), ct);

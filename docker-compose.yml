@@ -7,6 +7,7 @@ services:
       ASPNETCORE_URLS: "http://+:5001"
       DOTNET_ENVIRONMENT: "Development"
       MarketData__Source: "Mock"
+      MarketData__Binance__UseTestnet: "true"
     ports:
       - "5001:5001"
 
